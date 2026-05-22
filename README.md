@@ -54,6 +54,6 @@ Experienced technology leader transitioning into AIML Solution Architecture with
 
 ## Contact
 
-- GitHub: :contentReference[oaicite:0]{index=0}
-- LinkedIn: https://www.linkedin.com/in/repallerojarani/
-- Email: rojaranirepalle@gmail.com
+- GitHub    https://github.com/rojaranirepalle
+- LinkedIn  https://www.linkedin.com/in/repallerojarani/
+- Email       rojaranirepalle@gmail.com
