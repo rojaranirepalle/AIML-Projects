@@ -52,6 +52,17 @@ Experienced technology leader transitioning into AIML Solution Architecture with
 
 ---
 
+## Current Focus
+
+- Enterprise GenAI Architecture
+- Multi-Agent AI Systems
+- Retrieval-Augmented Generation (RAG)
+- AI Observability & Governance
+- Scalable AI Platform Engineering
+- Autonomous AI Workflows
+
+---
+
 ## Contact
 
 - GitHub    https://github.com/rojaranirepalle
