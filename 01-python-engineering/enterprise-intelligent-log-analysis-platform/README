@@ -1,0 +1,45 @@
+# Enterprise Intelligent Log Analysis Platform
+
+Enterprise-grade log analytics platform built using Python for scalable log ingestion, parsing, monitoring, and intelligent operational analytics.
+
+---
+
+## Objectives
+
+- Build scalable log parsing pipelines
+- Process structured/unstructured logs
+- Enable operational intelligence
+- Prepare architecture for ML & AI integrations
+- Demonstrate enterprise Python engineering practices
+
+---
+
+## Tech Stack
+
+- Python
+- Pandas
+- Pydantic
+- Pytest
+
+---
+
+## Project Roadmap
+
+### Phase 1
+- Modular architecture
+- Log parsing engine
+- Error categorization
+- Config-driven processing
+
+### Phase 2
+- Async processing
+- REST APIs
+- Analytics engine
+
+### Phase 3
+- ML anomaly detection
+- Predictive analytics
+
+### Phase 4
+- GenAI incident summarization
+- Agentic AI remediation workflows
