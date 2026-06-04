@@ -1,9 +1,12 @@
-from pydantic_settings import BaseSettings
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    app_name: str = "Enterprise Log Analysis Platform"
-    log_file_path: str = "logs/sample.log"
 
+    app_name: str
+    log_file_path: str
+
+    model_config = SettingsConfigDict(
+        env_file=".env"
+    )
 
 settings = Settings()

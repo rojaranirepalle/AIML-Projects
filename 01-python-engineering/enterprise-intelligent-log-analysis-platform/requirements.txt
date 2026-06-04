@@ -1,5 +1,6 @@
 pandas
-python-dotenv
 pydantic
+pydantic-settings
+python-dotenv
 rich
 pytest

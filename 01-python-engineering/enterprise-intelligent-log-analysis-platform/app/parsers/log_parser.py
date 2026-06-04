@@ -11,6 +11,7 @@ def parse_log_line(line: str):
     match = re.match(LOG_PATTERN, line)
 
     if match:
+
         return LogEntry(
             level=match.group(1),
             message=match.group(2)
