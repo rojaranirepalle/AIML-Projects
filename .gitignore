@@ -26,3 +26,6 @@
 *.nef
 *.dng
 *.psd
+
+# --- macOS system files ---
+.DS_Store
