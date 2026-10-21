@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Log Intelligence · Operations</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1020;--panel:#111a2d;--panel2:#151f35;--line:#25324b;--text:#edf3ff;--muted:#8e9bb4;--cyan:#55d6c2;--blue:#72a7ff;--red:#ff7185;--amber:#f5bd66;--green:#6cdb9b;--radius:18px;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 76% -12%,#1b3354 0,transparent 35%),var(--bg);color:var(--text);min-height:100vh}button{font:inherit;color:inherit}.layout{display:grid;grid-template-columns:238px minmax(0,1fr);min-height:100vh}.sidebar{padding:26px 18px;border-right:1px solid #1e2b41;background:#0b1120cc;display:flex;flex-direction:column;gap:30px}.brand{display:flex;align-items:center;gap:12px;padding:0 8px}.brand-mark{width:37px;height:37px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#5ce0ce,#4e8bf8);color:#07121d;box-shadow:0 8px 25px #3dd7c333}.brand-mark svg{width:21px}.brand strong{font-size:14px;letter-spacing:.01em}.brand small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.section-label{color:#687690;text-transform:uppercase;letter-spacing:.14em;font-size:10px;font-weight:700;padding:0 11px;margin-bottom:9px}.nav{display:grid;gap:5px}.nav a{padding:11px 12px;border-radius:11px;color:#9ba9c0;text-decoration:none;font-size:13px;display:flex;align-items:center;gap:11px}.nav a.active{color:#dffcf6;background:#18313a;box-shadow:inset 2px 0 #55d6c2}.nav svg{width:17px;height:17px;opacity:.8}.side-foot{margin-top:auto;padding:14px;border:1px solid var(--line);border-radius:14px;background:#10192a}.health{display:flex;align-items:center;gap:8px;font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px #6cdb9b77}.side-foot p{margin:8px 0 0;color:var(--muted);font-size:11px;line-height:1.5}.main{padding:30px clamp(18px,3vw,44px) 44px;max-width:1600px;width:100%;margin:auto}.topbar{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:26px}.eyebrow{color:var(--cyan);font-size:11px;text-transform:uppercase;letter-spacing:.16em;font-weight:700}.title{font-size:clamp(24px,3vw,34px);letter-spacing:-.04em;margin:7px 0 5px}.subtitle{margin:0;color:var(--muted);font-size:13px}.actions{display:flex;align-items:center;gap:10px}.updated{color:var(--muted);font-size:11px;margin-right:7px}.btn{border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:#121d31;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:8px;transition:.18s}.btn:hover{border-color:#4c668d;background:#192741}.btn.primary{border-color:#3caa9d;background:#173932;color:#c7fff3}.btn svg{width:15px;height:15px}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}.card{border:1px solid var(--line);background:linear-gradient(160deg,#131e32,#101829);border-radius:var(--radius);padding:19px;box-shadow:0 12px 32px #03071033}.kpi-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}.kpi-icon{width:31px;height:31px;border-radius:10px;display:grid;place-items:center;background:#1c2b43;color:var(--blue)}.kpi-icon svg{width:16px;height:16px}.kpi-value{font-size:29px;font-weight:650;letter-spacing:-.04em;margin:17px 0 5px}.kpi-foot{color:#8190a9;font-size:11px}.accent-red{color:var(--red)}.accent-amber{color:var(--amber)}.accent-cyan{color:var(--cyan)}.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:16px;margin-bottom:16px}.card-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:19px}.card-title{font-size:14px;font-weight:650;margin:0}.card-subtitle{margin:5px 0 0;color:var(--muted);font-size:11px}.tag{font-size:10px;border:1px solid #2b3c57;border-radius:20px;padding:6px 9px;color:#9cadc7;white-space:nowrap}.bars{display:grid;gap:15px}.bar-row{display:grid;grid-template-columns:90px minmax(40px,1fr) 35px;align-items:center;gap:12px;font-size:11px}.bar-label{color:#aebbd0}.track{height:8px;background:#202c42;border-radius:9px;overflow:hidden}.fill{height:100%;border-radius:9px;background:linear-gradient(90deg,#55d6c2,#6aa4ff);min-width:0;transition:width .45s}.bar-count{text-align:right;color:#dfe8f7;font-variant-numeric:tabular-nums}.forecast-box{padding:16px;border-radius:14px;background:linear-gradient(120deg,#142d37,#17233a);border:1px solid #2d555a;margin-bottom:16px}.forecast-label{font-size:11px;color:#a6bdc3}.forecast-number{font-size:26px;font-weight:650;letter-spacing:-.04em;margin:8px 0 3px}.forecast-detail{color:#96a8bc;font-size:11px}.trend{display:inline-flex;align-items:center;gap:5px;color:var(--cyan);font-size:11px;margin-top:12px}.trend.down{color:var(--amber)}.trend svg{width:14px}.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini-stat{padding:13px;border-radius:12px;background:#121d30;border:1px solid #22314a}.mini-stat span{display:block;color:var(--muted);font-size:10px}.mini-stat strong{display:block;font-size:17px;margin-top:7px}.lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px}.lower.single{grid-template-columns:1fr;margin-top:16px}.message-text.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px}.message-item.flag .rank{color:var(--cyan)}.message-list{display:grid;gap:8px}.message-item{display:grid;grid-template-columns:26px minmax(0,1fr) 34px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #202b40}.message-item:last-child{border-bottom:0}.rank{font-size:10px;color:#63738e}.message-text{font-size:11px;color:#d0daea;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.message-count{font-size:10px;color:var(--muted);text-align:right}.event-list{display:grid;gap:9px;max-height:270px;overflow:auto}.event{display:grid;grid-template-columns:8px 1fr auto;gap:10px;align-items:start;padding:11px;border-radius:11px;background:#121c2d;border:1px solid #202c42}.event-dot{width:7px;height:7px;border-radius:50%;margin-top:4px;background:var(--red)}.event.warning .event-dot{background:var(--amber)}.event.info .event-dot{background:var(--blue)}.event-copy{min-width:0}.event-level{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);font-weight:700}.event.warning .event-level{color:var(--amber)}.event.info .event-level{color:var(--blue)}.event-msg{margin-top:4px;font-size:11px;color:#d1dbeb;overflow-wrap:anywhere}.event-time{font-size:9px;color:#74839d;white-space:nowrap}.empty{color:var(--muted);font-size:12px;padding:14px 0}.brief{display:none;white-space:pre-wrap;line-height:1.65;font-size:12px;color:#d3e0ef;padding:15px;border:1px solid #2d4750;background:#10252b;border-radius:13px;margin-top:14px}.brief.show{display:block}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1b2940;border:1px solid #405472;color:#dce7f8;border-radius:10px;padding:10px 14px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none}.toast.show{opacity:1}.skeleton{color:#8190a9}.loading{opacity:.55;pointer-events:none}
+    @media(max-width:1000px){.layout{grid-template-columns:72px 1fr}.sidebar{padding:22px 10px;align-items:center}.brand{padding:0}.brand-copy,.section-label,.nav-label,.side-foot p{display:none}.nav{width:100%;margin-top:20px}.nav a{justify-content:center;padding:12px 5px}.side-foot{padding:12px}.kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:720px){.grid,.lower{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.actions{width:100%;justify-content:space-between}.updated{margin-right:auto}.main{padding-top:22px}.kpis{gap:9px}.card{padding:15px}.kpi-value{font-size:25px}.grid{gap:11px}}@media(max-width:420px){.layout{grid-template-columns:54px 1fr}.sidebar{padding:18px 6px}.brand-mark{width:32px;height:32px}.kpis{grid-template-columns:1fr 1fr}.bar-row{grid-template-columns:68px 1fr 25px;gap:7px}.updated{display:none}.btn{padding:9px 10px}}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18V6m5 12V9m5 9V4m5 14v-7"/><path d="M2 21h20"/></svg></div>
+        <div class="brand-copy"><strong>Log Intelligence</strong><small>Operations workspace</small></div>
+      </div>
+      <div style="width:100%">
+        <div class="section-label">Workspace</div>
+        <nav class="nav">
+          <a class="active" href="#overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg><span class="nav-label">Overview</span></a>
+          <a href="#signals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span class="nav-label">Signals</span></a>
+          <a href="#events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"/><circle cx="2.5" cy="5" r=".5" fill="currentColor"/><circle cx="2.5" cy="12" r=".5" fill="currentColor"/></svg><span class="nav-label">Log events</span></a>
+        </nav>
+      </div>
+      <div class="side-foot"><div class="health"><span class="dot"></span><span>Pipeline ready</span></div><p>Local analytics engine<br>API connected</p></div>
+    </aside>
+    <main class="main" id="overview">
+      <header class="topbar">
+        <div><div class="eyebrow">Operations / Overview</div><h1 class="title">System pulse</h1><p class="subtitle">A live view of your log stream and emerging signals.</p></div>
+        <div class="actions"><span class="updated" id="updated">Waiting for data</span><button class="btn" id="refresh" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9a7 7 0 0 1 12-2L20 12M4 12l2.5 5a7 7 0 0 0 12-2"/></svg>Refresh</button><button class="btn primary" id="summarize" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/><path d="m19 16 .9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16Z"/></svg>Incident brief</button></div>
+      </header>
+      <section class="kpis" aria-label="Key metrics">
+        <article class="card"><div class="kpi-head"><span>Events analyzed</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"/></svg></span></div><div class="kpi-value" id="total">—</div><div class="kpi-foot">Records in selected log file</div></article>
+        <article class="card"><div class="kpi-head"><span>Error rate</span><span class="kpi-icon" style="color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5m0 3h.01"/></svg></span></div><div class="kpi-value accent-red" id="error-rate">—</div><div class="kpi-foot" id="error-count">Waiting for data</div></article>
+        <article class="card"><div class="kpi-head"><span>Warnings</span><span class="kpi-icon" style="color:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5m0 3h.01"/></svg></span></div><div class="kpi-value accent-amber" id="warnings">—</div><div class="kpi-foot">Warning and warn severity</div></article>
+        <article class="card"><div class="kpi-head"><span>ML anomalies</span><span class="kpi-icon" style="color:var(--cyan)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div><div class="kpi-value accent-cyan" id="anomalies">—</div><div class="kpi-foot" id="anomaly-note">Waiting for data</div></article>
+      </section>
+      <section class="grid" id="signals">
+        <article class="card"><div class="card-title-row"><div><h2 class="card-title">Severity distribution</h2><p class="card-subtitle">Where the event volume is concentrated</p></div><span class="tag" id="distribution-tag">All levels</span></div><div class="bars" id="severity-bars"><div class="empty">Loading severity counts…</div></div></article>
+        <article class="card"><div class="card-title-row"><div><h2 class="card-title">Volume forecast</h2><p class="card-subtitle">A baseline projection from timestamped history</p></div><span class="tag">Next interval</span></div><div class="forecast-box"><div class="forecast-label" id="forecast-label">Forecast unavailable</div><div class="forecast-number" id="forecast-value">—</div><div class="forecast-detail" id="forecast-detail">Waiting for enough timestamped records</div><div class="trend" id="forecast-trend"></div></div><div class="mini-grid"><div class="mini-stat"><span>Rule-based alerts</span><strong id="rule-alerts">—</strong></div><div class="mini-stat"><span>Event templates</span><strong id="distinct-messages">—</strong></div></div></article>
+      </section>
+      <section class="lower">
+        <article class="card"><div class="card-title-row"><div><h2 class="card-title">Top event templates</h2><p class="card-subtitle">Lines grouped by Drain3 · IDs, IPs and numbers masked</p></div><span class="tag" id="template-tag">Top 10</span></div><div class="message-list" id="top-messages"><div class="empty">Loading templates…</div></div></article>
+        <article class="card" id="events"><div class="card-title-row"><div><h2 class="card-title">Recent events</h2><p class="card-subtitle">Latest normalized records</p></div><span class="tag" id="event-count">—</span></div><div class="event-list" id="event-list"><div class="empty">Loading events…</div></div><div class="brief" id="brief"></div></article>
+      </section>
+      <section class="lower single">
+        <article class="card"><div class="card-title-row"><div><h2 class="card-title">Rare event types</h2><p class="card-subtitle">Templates the Isolation Forest flagged for rarity or severity</p></div><span class="tag" id="rare-tag">ML</span></div><div class="message-list" id="rare-templates"><div class="empty">Loading model output…</div></div></article>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fmt = (value) => Number(value || 0).toLocaleString();
+    const safe = (value) => String(value ?? "—");
+    function toast(message) { const el = $("toast"); el.textContent = message; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 3000); }
+    function node(tag, className, text) { const el = document.createElement(tag); if (className) el.className = className; if (text !== undefined) el.textContent = text; return el; }
+    function renderBars(distribution) {
+      const root = $("severity-bars"); root.replaceChildren();
+      const rows = Object.entries(distribution || {}).sort((a,b) => (b[1]||0) - (a[1]||0));
+      if (!rows.length) { root.append(node("div", "empty", "No log records found.")); return; }
+      const max = Math.max(...rows.map(([,count]) => Number(count) || 0), 1);
+      for (const [level,count] of rows) {
+        const row = node("div", "bar-row"); row.append(node("span", "bar-label", level));
+        const track = node("div", "track"); const fill = node("div", "fill"); fill.style.width = `${Math.max(0, Number(count)/max*100)}%`; track.append(fill);
+        row.append(track, node("span", "bar-count", fmt(count))); root.append(row);
+      }
+    }
+    function renderMessages(messages) {
+      const root = $("top-messages"); root.replaceChildren();
+      const rows = Object.entries(messages || {}).slice(0,10);
+      if (!rows.length) { root.append(node("div", "empty", "No repeated messages in this file.")); return; }
+      rows.forEach(([message,count],i) => { const row=node("div","message-item"); row.append(node("span","rank",String(i+1).padStart(2,"0")),node("span","message-text",message),node("span","message-count",`×${fmt(count)}`));root.append(row); });
+    }
+    function renderTemplates(rootId, rows, emptyText, label) {
+      const root = $(rootId); root.replaceChildren();
+      if (!rows || !rows.length) { root.append(node("div", "empty", emptyText)); return; }
+      rows.forEach((row, i) => {
+        const item = node("div", "message-item" + (label ? " flag" : ""));
+        const text = node("span", "message-text mono", row.template); text.title = row.template;
+        item.append(node("span", "rank", label ? label(row) : String(i + 1).padStart(2, "0")), text, node("span", "message-count", `×${fmt(row.count)}`));
+        root.append(item);
+      });
+    }
+    function renderEvents(items) {
+      const root = $("event-list"); root.replaceChildren();
+      const selected = [...(items || [])].reverse().slice(0,10);
+      $("event-count").textContent = `${selected.length} shown`;
+      if (!selected.length) { root.append(node("div","empty","No log events found.")); return; }
+      for (const item of selected) {
+        const level = safe(item.level).toUpperCase();
+        const type = ["ERROR","ERR","FATAL","CRITICAL","SEVERE"].includes(level) ? "error" : ["WARN","WARNING"].includes(level) ? "warning" : "info";
+        const event=node("div",`event ${type}`); const copy=node("div","event-copy"); copy.append(node("div","event-level",level),node("div","event-msg",item.message)); event.append(node("span","event-dot"),copy,node("span","event-time",item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : safe(item.source))); root.append(event);
+      }
+    }
+    async function refresh() {
+      document.body.classList.add("loading");
+      try {
+        const response = await fetch("/dashboard-data");
+        if (!response.ok) throw new Error("The log API returned an error.");
+        const snapshot = await response.json(); const summary = snapshot.summary;
+        $("total").textContent=fmt(summary.total_logs); $("error-rate").textContent=`${((summary.error_rate||0)*100).toFixed(1)}%`;
+        $("error-count").textContent=`${fmt(summary.error_count)} error-level events`;
+        $("warnings").textContent=fmt(summary.warning_count);
+        const ml=summary.ml_anomalies||{}; $("anomalies").textContent=ml.available?fmt(ml.anomaly_count):"—";
+        $("anomaly-note").textContent=ml.available?`${fmt(ml.records_analyzed)} records · rarity + severity model`:ml.reason||"Insufficient data for model scoring";
+        renderBars(summary.severity_distribution); if (summary.top_templates && summary.top_templates.length) { renderTemplates("top-messages", summary.top_templates, "No templates found."); $("template-tag").textContent = `${fmt(summary.template_count)} templates`; } else { renderMessages(summary.top_messages); }
+        renderTemplates("rare-templates", ml.anomalous_templates, ml.available ? "No rare event types in this batch." : (ml.reason || "Not enough data for model scoring."), (row) => row.level.slice(0,4));
+        $("rare-tag").textContent = ml.available ? `${fmt((ml.anomalous_templates||[]).length)} types · ${fmt(ml.anomaly_count)} records` : "ML"; renderEvents(snapshot.items);
+        $("rule-alerts").textContent=fmt(summary.anomaly_count); $("distinct-messages").textContent=fmt(summary.template_count ?? Object.keys(summary.top_messages||{}).length);
+        const forecast=summary.forecast||{};
+        if(forecast.available){$("forecast-label").textContent=`${forecast.frequency} · ${forecast.next_bucket}`;$("forecast-value").textContent=`${fmt(forecast.predicted_log_count)} events`;$("forecast-detail").textContent=forecast.predicted_error_count===null?`${forecast.buckets_analyzed} buckets analyzed · error forecast unavailable`:`${fmt(forecast.predicted_error_count)} predicted errors · ${forecast.buckets_analyzed} buckets analyzed`;$("forecast-trend").textContent=`Trend ${forecast.trend}`;$("forecast-trend").className=`trend ${forecast.trend==="decreasing"?"down":""}`;}
+        else{$("forecast-label").textContent="Forecast unavailable";$("forecast-value").textContent="—";$("forecast-detail").textContent=forecast.reason||"Add timestamped logs to forecast volume";$("forecast-trend").textContent="";}
+        $("updated").textContent=`Updated ${new Date().toLocaleTimeString()}`;
+      } catch(error) { toast(error.message || "Could not load dashboard data."); }
+      finally { document.body.classList.remove("loading"); }
+    }
+    async function summarize() {
+      const button=$("summarize"); button.disabled=true; button.textContent="Generating…";
+      try { const response=await fetch("/incident-summary",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({})}); const body=await response.json(); if(!response.ok) throw new Error(body.detail||"Summary request failed."); const brief=$("brief");brief.textContent=body.summary;brief.classList.add("show"); }
+      catch(error){toast(error.message||"Could not generate incident brief.");}
+      finally {button.disabled=false;button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/><path d="m19 16 .9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16Z"/></svg>Incident brief';}
+    }
+    $("refresh").addEventListener("click",refresh); $("summarize").addEventListener("click",summarize); refresh();
+  </script>
+</body>
+</html>

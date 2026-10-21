@@ -1,6 +1,13 @@
 __pycache__/
 *.pyc
+.pytest_cache/
+.venv/
+venv/
 .env
 .vscode/
 .idea/
-logs/*.log
+.DS_Store
+
+# Generated reports and runtime logs (regenerate with `python main.py`)
+logs/*
+!logs/.gitkeep
