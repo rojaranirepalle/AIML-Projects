@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-HDFS_LOG = PROJECT_ROOT / "data" / "HDFS_2k.log"
+MAGENTO_SAMPLE = PROJECT_ROOT / "data" / "samples" / "adobe_commerce_system.log"
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def timestamped_log(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def hdfs_log() -> Path:
-    if not HDFS_LOG.is_file():
-        pytest.skip("data/HDFS_2k.log is not available")
-    return HDFS_LOG
+def magento_sample() -> Path:
+    if not MAGENTO_SAMPLE.is_file():
+        pytest.skip("Run scripts/generate_magento_sample.py to create the sample log")
+    return MAGENTO_SAMPLE

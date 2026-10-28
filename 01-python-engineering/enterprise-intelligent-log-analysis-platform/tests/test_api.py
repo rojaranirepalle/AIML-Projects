@@ -55,4 +55,4 @@ def test_incident_summary_disabled_returns_409(client, mixed_log, monkeypatch):
 
 def test_dashboard_page_served(client):
     response = client.get("/dashboard")
-    assert response.status_code == 200 and "Top event templates" in response.text
+    assert response.status_code == 200 and "Needs attention" in response.text and "Top event types" in response.text

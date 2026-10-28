@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#BCD8F2"><title>Settings · Log Intelligence</title>
+<link rel="stylesheet" href="/static/theme.css">
+<style>
+.settings-form{display:grid;gap:20px}.field label{display:block;font-size:13px;font-weight:600;margin-bottom:8px}.field input,.field select{width:100%;min-width:0;height:42px;background:white;border:1px solid #CBD5E1;border-radius:8px;padding:9px 12px;font-size:14px}.field input:focus,.field select:focus{outline:2px solid #9EC3E0;border-color:var(--solid)}.help{font-size:13px;color:var(--muted);line-height:1.6;margin:8px 0 0}.form-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}.feedback{font-size:13px;line-height:1.5;margin:0;color:var(--green-ink)}.feedback.error{color:var(--red-ink)}.toggle{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid #C9E4EA;background:var(--teal-bg);border-radius:10px}.toggle input{width:18px;height:18px;margin-top:2px;accent-color:var(--solid)}.toggle strong{display:block;font-size:14px}.toggle .help{margin:4px 0 0}.provider-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.provider{margin:0;padding:16px;border:1px solid var(--line);border-radius:12px;min-width:0}.provider legend{font-size:14px;font-weight:600;padding:0 6px}.provider .field+.field{margin-top:16px}.key-state{display:block;font-size:12px;color:var(--muted);margin-top:8px}.note{border-radius:10px;background:var(--blue-bg);padding:12px 14px;font-size:13px;line-height:1.6;color:var(--ink-2)}fieldset:disabled{opacity:.65}fieldset.form-fields{border:0;padding:0;margin:0;min-width:0;display:grid;gap:20px}.status-line{font-size:13px;color:var(--muted);margin:0}.provider-choice{max-width:360px}@media(max-width:1100px){.provider-grid{grid-template-columns:1fr}}@media(max-width:600px){.card-body{padding:16px}.form-actions{align-items:flex-start;flex-direction:column}}
+</style></head><body>
+  <div class="top">
+    <header class="appbar container">
+      <a class="brand" href="/dashboard"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><strong>Log Intelligence</strong></a>
+      <span class="spacer"></span>
+      <a class="btn on-hero" href="/dashboard">← Back to dashboard</a>
+    </header>
+    <div class="hero container">
+      <div class="hero-copy">
+        <span class="eyebrow">Workspace configuration</span>
+        <h1>Settings</h1>
+        <p id="subtitle">Connect your log sources and configure AI assistance in one place.</p>
+      </div>
+    </div>
+  </div>
+
+<div class="wrap container"><aside class="side"><div class="label">Workspace</div>
+<nav aria-label="Main">
+        <a class="nl" href="/dashboard#attention"><span class="ic" style="color:#E5645C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span>Needs attention</a>
+        <a class="nl" href="/dashboard#overview"><span class="ic" style="color:#3E7CB1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Overview</a>
+        <a class="nl" href="/dashboard#issues"><span class="ic" style="color:#2FA36B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4 2.6-2.6Z"/></svg></span>Issues &amp; fixes</a>
+        <a class="nl" href="/explorer"><span class="ic" style="color:#7A6FD6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Log explorer</a>
+        <a class="nl" href="/dashboard#traffic"><span class="ic" style="color:#1FA3A0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>Web traffic</a>
+      <a class="nl" href="/settings" aria-current="page"><span class="ic" style="color:#7A6FD6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="white"/><circle cx="15" cy="17" r="3" fill="white"/></svg></span>Settings</a>
+      </nav>
+<div class="who"><strong>Log Intelligence</strong><span>Logs from any application or service</span></div></aside>
+<main class="main">
+<section class="card t-blue" aria-labelledby="source-title">
+<div class="card-head"><div><h2 id="source-title">Log files</h2><p class="sub">Set the default source for log analysis</p></div><span class="tag">Local source</span></div>
+<div class="card-body"><form id="source-form" class="settings-form">
+<fieldset class="form-fields" id="source-fields" disabled>
+<div class="field"><label for="log-path">Log files root directory path</label><input id="log-path" name="log_file_path" required placeholder="/path/to/logs" aria-describedby="path-help" spellcheck="false"><p class="help" id="path-help">Choose a readable folder on the machine running this app. Loads *.log files directly inside the folder. Relative paths start at the project folder.</p></div>
+<div class="form-actions"><button class="btn primary" id="save-source">Save log directory</button></div>
+</fieldset><p id="source-status" class="feedback" role="status" aria-live="polite">Loading log source…</p>
+<div class="note">Saved across restarts. Refresh the dashboard or explorer to use the new source. Live monitoring continues to use the directory selected at startup with <code>--log-dir</code>.</div>
+</form></div></section>
+<section class="card t-lilac" aria-labelledby="llm-title">
+<div class="card-head"><div><h2 id="llm-title">LLM configuration</h2><p class="sub">Provider credentials for AI explanations and incident summaries</p></div><span class="tag" id="ai-state">Loading…</span></div>
+<div class="card-body"><form id="llm-form" class="settings-form" autocomplete="off">
+<fieldset class="form-fields" id="llm-fields" disabled>
+<label class="toggle"><input type="checkbox" id="llm-enabled"><span><strong>Enable AI assistance</strong><span class="help">Allow masked log evidence and summaries to be sent to the selected provider when you request AI analysis.</span></span></label>
+<div class="field provider-choice"><label for="llm-provider">Active LLM provider</label><select id="llm-provider"><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="gemini">Google Gemini</option></select></div>
+<div class="provider-grid" id="provider-fields"></div>
+<p class="note" id="key-help">Keys are stored locally on the server with owner-only file permissions. Saved keys are never returned to this page. Leave a key blank to keep its current value.</p>
+<div class="form-actions"><button class="btn primary" id="save-llm">Save LLM configuration</button><span class="status-line">Changes apply immediately. No restart needed.</span></div>
+</fieldset><p id="llm-status" class="feedback" role="status" aria-live="polite">Loading LLM configuration…</p>
+</form></div></section>
+</main></div>
+<script>
+const $ = id => document.getElementById(id);
+const providers = {openai:'OpenAI',anthropic:'Anthropic',gemini:'Google Gemini'};
+for (const [id, label] of Object.entries(providers)) {
+  const fieldset = document.createElement('fieldset'); fieldset.className='provider';
+  const legend = document.createElement('legend'); legend.textContent=label; fieldset.append(legend);
+  for (const [suffix, title, type] of [['model','Model','text'],['api-key','API key','password']]) {
+    const field=document.createElement('div');field.className='field';
+    const caption=document.createElement('label');caption.htmlFor=`${id}-${suffix}`;caption.textContent=title;
+    const input=document.createElement('input');input.id=caption.htmlFor;input.type=type;input.spellcheck=false;
+    if(suffix==='model') {input.required=true;input.maxLength=200;} else {input.autocomplete='new-password';input.placeholder='Enter a new key';input.setAttribute('aria-describedby',`${id}-key-state key-help`);}
+    field.append(caption,input);fieldset.append(field);
+  }
+  const state=document.createElement('span');state.id=`${id}-key-state`;state.className='key-state';fieldset.append(state);
+  $('provider-fields').append(fieldset);
+}
+function message(id, text, error=false) {$(id).textContent=text;$(id).classList.toggle('error',error);}
+async function request(url, body) {
+  const response=await fetch(url,body ? {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)} : {});
+  const data=await response.json();
+  if(!response.ok) throw new Error(typeof data.detail==='string' ? data.detail : 'Please check the settings and try again.');
+  return data;
+}
+function renderLLM(data) {
+  $('llm-enabled').checked=data.enabled;$('llm-provider').value=data.provider;
+  $('ai-state').textContent=data.enabled?'AI enabled':'AI disabled';
+  for(const id of Object.keys(providers)) {
+    $(`${id}-model`).value=data[`${id}_model`];$(`${id}-api-key`).value='';
+    $(`${id}-key-state`).textContent=data[`${id}_key_configured`]?'Key configured':'No key configured';
+    $(`${id}-api-key`).placeholder=data[`${id}_key_configured`]?'Leave blank to keep saved key':'Enter a new key';
+  }
+  if(data.shared_key_configured) $('key-help').textContent='A shared key is configured in the server environment. Provider-specific keys entered here take precedence. Saved keys stay on the server; leave fields blank to keep them.';
+}
+async function loadSource() {
+  try {const data=await request('/settings/log-source');$('log-path').value=data.log_file_path;$('source-fields').disabled=false;message('source-status','');}
+  catch(error){message('source-status','Unable to load log source. Reload to retry.',true);}
+}
+async function loadLLM() {
+  try {renderLLM(await request('/settings/llm'));$('llm-fields').disabled=false;message('llm-status','');}
+  catch(error){message('llm-status','Unable to load LLM settings. Reload to retry.',true);}
+}
+$('source-form').addEventListener('submit',async event=>{
+  event.preventDefault();$('source-fields').disabled=true;message('source-status','Saving…');
+  try {const data=await request('/settings/log-source',{log_file_path:$('log-path').value,directory_only:true});$('log-path').value=data.log_file_path;message('source-status','Log directory saved. Refresh the dashboard or explorer to load it.');}
+  catch(error){message('source-status',error.message,true);}finally{$('source-fields').disabled=false;}
+});
+$('llm-form').addEventListener('submit',async event=>{
+  event.preventDefault();const body={enabled:$('llm-enabled').checked,provider:$('llm-provider').value};
+  for(const id of Object.keys(providers)){body[`${id}_model`]=$(`${id}-model`).value.trim();const key=$(`${id}-api-key`).value.trim();if(key)body[`${id}_api_key`]=key;}
+  $('llm-fields').disabled=true;message('llm-status','Saving…');
+  try{renderLLM(await request('/settings/llm',body));message('llm-status','LLM configuration saved.');}
+  catch(error){message('llm-status',error.message,true);}finally{$('llm-fields').disabled=false;}
+});
+loadSource();loadLLM();
+</script></body></html>

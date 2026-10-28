@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 
+from app.models.log_model import ERROR_LEVELS
+
 
 def forecast_log_volume(df: pd.DataFrame) -> dict:
     """Extrapolate the recent linear trend by one time bucket, when data permits."""
@@ -33,7 +35,7 @@ def forecast_log_volume(df: pd.DataFrame) -> dict:
     if "level" in df:
         normalized = df["level"].fillna("UNKNOWN").astype(str).str.upper()
         error_timestamps = pd.to_datetime(
-            df.loc[normalized.isin({"ERROR", "ERR", "FATAL", "CRITICAL", "SEVERE"}), "timestamp"],
+            df.loc[normalized.isin(ERROR_LEVELS), "timestamp"],
             utc=True,
             errors="coerce",
         ).dropna()

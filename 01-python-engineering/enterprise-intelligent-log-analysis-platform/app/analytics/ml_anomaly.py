@@ -25,7 +25,7 @@ SEVERITY_RANK = {
     "INFO": 1, "NOTICE": 1, "UNKNOWN": 1,
     "WARN": 2, "WARNING": 2,
     "ERROR": 3, "ERR": 3,
-    "FATAL": 4, "CRITICAL": 4, "SEVERE": 4,
+    "FATAL": 4, "CRITICAL": 4, "SEVERE": 4, "ALERT": 4, "EMERGENCY": 4,
 }
 
 

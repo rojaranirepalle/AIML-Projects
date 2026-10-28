@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#BCD8F2">
+  <title>Log Explorer</title>
+  <link rel="stylesheet" href="/static/theme.css">
+  <style>
+    .filters{display:grid;grid-template-columns:minmax(220px,2fr) repeat(4,minmax(140px,1fr)) auto;gap:10px;align-items:end;margin-bottom:12px}
+    .field.search{display:block;flex:none;max-width:none;border:0;padding:0;background:none}
+    .field label{display:block;font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:600}
+    .field input,.field select{width:100%;background:#fff;border:1px solid #CBD5E1;border-radius:8px;padding:9px 11px;font-size:14px;min-width:0;height:38px}
+    .field input:focus,.field select:focus{outline:2px solid #9EC3E0;border-color:var(--solid)}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 0}
+    .chips .chip,#template-filter .chip{height:auto;padding:6px 12px;font-size:12px;background:#fff;border:1px solid var(--line);color:#334155;box-shadow:none;font-weight:400}
+    .chips .chip[aria-pressed="true"],#template-filter .chip[aria-pressed="true"]{background:var(--blue-bg);border-color:var(--solid);color:var(--solid);font-weight:600}
+    .chips .chip .n{margin-left:2px}
+    .meta-row{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--ink-2);font-size:14px;margin:0 2px}
+    .results{display:grid;gap:6px}
+    .row{display:grid;grid-template-columns:150px 82px 140px minmax(0,1fr);gap:12px;align-items:center;padding:10px 14px;border-radius:10px;background:#fff;border:1px solid var(--line);cursor:pointer;text-align:left;width:100%;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+    .row:hover,.row:focus-visible{border-color:var(--solid);outline:none}
+    .row.selected{border-color:var(--solid);background:var(--blue-bg)}
+    .t{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+    .lv{font-size:11px;font-weight:700;letter-spacing:.06em}
+    .lv.ERROR,.lv.ERR,.lv.CRITICAL,.lv.ALERT,.lv.EMERGENCY,.lv.FATAL{color:var(--red-ink)}
+    .lv.WARNING,.lv.WARN{color:var(--amber-ink)}.lv.INFO,.lv.NOTICE{color:var(--blue-ink)}.lv.DEBUG{color:#64748B}
+    .src{font-size:12px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .msg{font-size:13px;color:#1E293B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .msg .exc{color:#2FA36B;margin-left:8px;font-size:11px;font-weight:600}
+    .empty{text-align:center;padding:30px 0}
+    .drawer{position:fixed;top:0;right:0;height:100vh;width:min(720px,100vw);background:#fff;border-left:1px solid var(--line);border-top:5px solid var(--solid);box-shadow:-20px 0 50px rgba(15,23,42,.18);transform:translateX(100%);transition:transform .22s ease;overflow-y:auto;padding:20px 24px 40px;z-index:20}
+    .drawer.open{transform:none}.drawer h2{font-size:18px;margin:0 0 4px}
+    .kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 12px;font-size:13px;margin:16px 0}.kv dt{color:var(--muted)}.kv dd{margin:0;overflow-wrap:anywhere}
+    pre{font-family:var(--mono);font-size:12px;line-height:1.55;background:#F4F7FB;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;max-height:340px;white-space:pre-wrap;word-break:break-word;color:#1E293B}
+    .fix{border:1px solid #C9E4EA;background:var(--teal-bg);border-radius:12px;padding:14px;margin:14px 0}
+    .fix h3{margin:0 0 6px;font-size:14px}.fix p{margin:0 0 8px;font-size:13px;color:#334155;line-height:1.55}.fix ul{margin:0 0 8px;padding-left:18px;font-size:13px;color:#334155;line-height:1.6}
+    .answer .mode{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .section-title{font-size:12px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.08em;margin:20px 0 8px;font-weight:700}
+    .close{float:right}
+    .btn.primary{height:36px}
+    @media(max-width:1100px){.filters{grid-template-columns:1fr 1fr 1fr}.filters .field.search{grid-column:1/-1}}
+    @media(max-width:720px){.filters{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr auto;gap:4px 10px}.row .src{grid-column:1}.row .msg{grid-column:1/-1;white-space:normal}.kv{grid-template-columns:90px 1fr}.drawer{padding:18px 16px 40px}}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <header class="appbar container">
+      <a class="brand" href="/dashboard"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><strong>Log Intelligence</strong></a>
+      <span class="spacer"></span>
+      <a class="btn on-hero" href="/dashboard">← Back to dashboard</a>
+    </header>
+    <div class="hero container">
+      <div class="hero-copy">
+        <span class="eyebrow">Search &amp; investigate</span>
+        <h1>Log explorer</h1>
+        <p id="subtitle">Search every record, open full stack traces, and get fixes.</p>
+      </div>
+    </div>
+  </div>
+  <div class="wrap container">
+    <aside class="side">
+      <div class="label">Workspace</div>
+      <nav aria-label="Main">
+        <a class="nl" href="/dashboard#attention"><span class="ic" style="color:#E5645C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span>Needs attention</a>
+        <a class="nl" href="/dashboard#overview"><span class="ic" style="color:#3E7CB1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Overview</a>
+        <a class="nl" href="/dashboard#issues"><span class="ic" style="color:#2FA36B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4 2.6-2.6Z"/></svg></span>Issues &amp; fixes</a>
+        <a class="nl" href="/explorer" aria-current="page"><span class="ic" style="color:#7A6FD6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Log explorer</a>
+        <a class="nl" href="/dashboard#traffic"><span class="ic" style="color:#1FA3A0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>Web traffic</a>
+      <a class="nl" href="/settings"><span class="ic" style="color:#7A6FD6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="white"/><circle cx="15" cy="17" r="3" fill="white"/></svg></span>Settings</a>
+      </nav>
+    </aside>
+    <main class="main">
+      <section class="card t-blue" aria-label="Filters"><div class="card-body">
+        <form class="filters" id="filters">
+          <div class="field search"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="Message, exception or template text…" autocomplete="off"></div>
+          <div class="field"><label for="source">File</label><select id="source" name="source"><option value="">All files</option></select></div>
+          <div class="field"><label for="exception">Exception</label><select id="exception" name="exception"><option value="">Any</option></select></div>
+          <div class="field"><label for="since">From (UTC)</label><input id="since" name="since" type="datetime-local"></div>
+          <div class="field"><label for="until">To (UTC)</label><input id="until" name="until" type="datetime-local"></div>
+          <button class="btn" type="button" id="clear">Clear</button>
+        </form>
+        <div class="chips" id="levels" role="group" aria-label="Levels"></div>
+      </div></section>
+      <div class="meta-row" style="margin-top:16px"><span id="count">Loading…</span><span id="template-filter"></span></div>
+      <div class="results" id="results"></div>
+      <div style="text-align:center;margin-top:14px"><button class="btn" id="more" type="button" hidden>Load more</button></div>
+
+    </main>
+  </div>
+  <aside class="drawer" id="drawer" aria-label="Record details" aria-hidden="true">
+    <button class="btn close" id="close" type="button">Close</button>
+    <div id="detail"></div>
+  </aside>
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+    const LEVEL_GROUPS = { error: ["ERROR","ERR","FATAL","CRITICAL","SEVERE","ALERT","EMERGENCY"], warning: ["WARN","WARNING"], info: ["INFO","NOTICE"], debug: ["DEBUG","TRACE"] };
+    // Accept dashboard groups (?level=error,warning) as well as exact levels.
+    const initialLevels = (params.get("level") || "").split(",").filter(Boolean).flatMap((value) => LEVEL_GROUPS[value.toLowerCase()] || [value.toUpperCase()]);
+    const state = { offset: 0, limit: 100, levels: new Set(initialLevels), templateId: params.get("template_id"), inputPath: params.get("input_path"), selected: null, facetsLoaded: false };
+    function node(tag, className, text) { const el = document.createElement(tag); if (className) el.className = className; if (text !== undefined && text !== null) el.textContent = text; return el; }
+    function toast(message) { const el = $("toast"); el.textContent = message; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2600); }
+    const fmtTime = (value) => value ? new Date(value).toLocaleString([], { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
+    for (const key of ["q", "source", "exception", "since", "until"]) if (params.get(key)) $(key).value = params.get(key);
+
+    function query(extra = {}) {
+      const search = new URLSearchParams();
+      for (const key of ["q", "source", "exception", "since", "until"]) { const value = $(key).value.trim(); if (value) search.set(key, value); }
+      if (state.levels.size) search.set("level", [...state.levels].join(","));
+      if (state.templateId) search.set("template_id", state.templateId);
+      if (state.inputPath) search.set("input_path", state.inputPath);
+      for (const [key, value] of Object.entries(extra)) search.set(key, value);
+      return search;
+    }
+    function syncUrl() { const search = query(); history.replaceState(null, "", search.toString() ? `?${search}` : location.pathname); }
+
+    function renderFacets(facets) {
+      const levels = $("levels"); levels.replaceChildren();
+      for (const [level, count] of Object.entries(facets.level || {})) {
+        const chip = node("button", "chip", level); chip.type = "button"; chip.setAttribute("aria-pressed", state.levels.has(level));
+        chip.append(node("span", "n", count.toLocaleString()));
+        chip.addEventListener("click", () => { state.levels.has(level) ? state.levels.delete(level) : state.levels.add(level); chip.setAttribute("aria-pressed", state.levels.has(level)); load(true); });
+        levels.append(chip);
+      }
+      if (state.facetsLoaded) return;
+      for (const [id, values] of [["source", facets.source], ["exception", facets.exception]]) {
+        const select = $(id); const current = params.get(id) || "";
+        for (const [value, count] of Object.entries(values || {})) { const option = node("option", null, `${value.split("\\").pop()} (${count.toLocaleString()})`); option.value = value; option.title = value; select.append(option); }
+        select.value = current;
+      }
+      state.facetsLoaded = true;
+    }
+
+    async function load(reset) {
+      if (reset) state.offset = 0;
+      syncUrl();
+      const response = await fetch(`/explorer/records?${query({ offset: state.offset, limit: state.limit })}`);
+      const body = await response.json();
+      if (!response.ok) { toast(body.detail || "Could not load records"); $("count").textContent = body.detail || "Error"; return; }
+      renderFacets(body.facets);
+      $("subtitle").textContent = body.mode === "live" ? "Searching the live monitoring store." : "Searching the configured log file or directory.";
+      $("count").textContent = `${body.total.toLocaleString()} matching records`;
+      $("template-filter").replaceChildren();
+      if (state.templateId) { const clear = node("button", "chip", `Template #${state.templateId} ✕`); clear.type = "button"; clear.setAttribute("aria-pressed", "true"); clear.addEventListener("click", () => { state.templateId = null; load(true); }); $("template-filter").append(clear); }
+      const root = $("results"); if (reset) root.replaceChildren();
+      if (!body.items.length && reset) root.append(node("div", "empty", "No records match these filters."));
+      for (const item of body.items) {
+        const row = node("button", "row"); row.type = "button"; row.dataset.id = item.id;
+        const msg = node("span", "msg", item.message); if (item.exception) msg.append(node("span", "exc", item.exception.split("\\").pop()));
+        row.append(node("span", "t", fmtTime(item.time)), node("span", `lv ${item.level}`, item.level), node("span", "src", item.source || "—"), msg);
+        row.addEventListener("click", () => openDetail(item.id, row));
+        root.append(row);
+      }
+      state.offset += body.items.length;
+      $("more").hidden = state.offset >= body.total;
+    }
+
+    function fixCard(issue) {
+      const card = node("div", "fix"); card.append(node("h3", null, `Known issue: ${issue.title}`), node("p", null, issue.cause));
+      const list = node("ul"); for (const step of issue.fix) list.append(node("li", null, step)); card.append(list);
+      for (const command of issue.commands || []) {
+        const line = node("div", "cmd"); const code = node("code", null, command); const copy = node("button", "btn", "Copy"); copy.type = "button";
+        copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(command); toast("Copied"); } catch { toast("Copy failed"); } });
+        line.append(code, copy); card.append(line);
+      }
+      return card;
+    }
+
+    async function openDetail(id, row) {
+      document.querySelectorAll(".row.selected").forEach((el) => el.classList.remove("selected")); row?.classList.add("selected");
+      const search = state.inputPath ? `?input_path=${encodeURIComponent(state.inputPath)}` : "";
+      const response = await fetch(`/explorer/records/${id}${search}`); const record = await response.json();
+      if (!response.ok) { toast(record.detail || "Record not found"); return; }
+      const root = $("detail"); root.replaceChildren();
+      root.append(node("h2", null, record.level + " · " + (record.source || "")), node("div", "t", fmtTime(record.time)));
+      const kv = node("dl", "kv");
+      const add = (label, value) => { if (value === null || value === undefined || value === "") return; kv.append(node("dt", null, label), node("dd", null, String(value))); };
+      add("Message", record.message); add("Exception", record.exception); add("Channel", record.channel); add("Template", record.template);
+      add("Occurrences", `${record.related.template_count.toLocaleString()} records with this template` + (record.related.first_seen ? ` · first ${fmtTime(record.related.first_seen)} · last ${fmtTime(record.related.last_seen)}` : ""));
+      root.append(kv);
+      if (record.template_id !== null && record.template_id !== undefined) {
+        const same = node("button", "btn", "Show all records of this type"); same.type = "button"; same.style.marginRight = "8px";
+        same.addEventListener("click", () => { state.templateId = record.template_id; closeDrawer(); load(true); }); root.append(same);
+      }
+      for (const issue of record.known_issues || []) root.append(fixCard(issue));
+      const explain = node("button", "btn primary", "Explain with AI"); explain.type = "button"; explain.style.marginTop = "14px";
+      const answer = node("div"); root.append(explain, answer);
+      explain.addEventListener("click", async () => {
+        explain.disabled = true; explain.textContent = "Investigating…";
+        try {
+          const response = await fetch("/assistant/explain", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ record_id: record.id, input_path: state.inputPath || null }) });
+          const body = await response.json(); if (!response.ok) throw new Error(body.detail || "Request failed");
+          answer.replaceChildren(); const box = node("div", "answer"); box.append(node("span", "mode", body.mode === "llm" ? `AI analysis · ${body.provider}` : "Rule-based analysis (AI provider not enabled)"), document.createTextNode(body.answer)); answer.append(box);
+        } catch (error) { toast(error.message); }
+        finally { explain.disabled = false; explain.textContent = "Explain with AI"; }
+      });
+      if (record.raw && record.raw !== record.message) { root.append(node("div", "section-title", record.stack_frames ? `Full record · ${record.stack_frames} stack frames` : "Full record")); root.append(node("pre", null, record.raw)); }
+      $("drawer").classList.add("open"); $("drawer").setAttribute("aria-hidden", "false"); $("close").focus();
+    }
+    function closeDrawer() { $("drawer").classList.remove("open"); $("drawer").setAttribute("aria-hidden", "true"); }
+
+    let timer = null;
+    $("filters").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => load(true), 300); });
+    $("filters").addEventListener("submit", (event) => { event.preventDefault(); load(true); });
+    $("clear").addEventListener("click", () => { $("filters").reset(); state.levels.clear(); state.templateId = null; load(true); });
+    $("more").addEventListener("click", () => load(false));
+    $("close").addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeDrawer(); });
+    load(true);
+    if (params.get("record")) openDetail(params.get("record"));
+  </script>
+</body>
+</html>

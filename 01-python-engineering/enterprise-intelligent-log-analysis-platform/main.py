@@ -1,5 +1,6 @@
 import argparse
 import json
+from pathlib import Path
 
 from rich import print
 
@@ -16,6 +17,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--report", default=str(settings.report_file_path), help="CSV report destination")
     parser.add_argument("--summary", default=str(settings.summary_file_path), help="JSON summary destination")
     parser.add_argument("--api", action="store_true", help="Run the local REST API")
+    parser.add_argument("--monitor", action="store_true", help="Run the API with live monitoring of a log directory")
+    parser.add_argument("--log-dir", help="Directory to monitor, e.g. <magento>/src/var/log (overrides MAGENTO_LOG_DIR)")
     parser.add_argument("--incident-summary", action="store_true", help="Request an opt-in provider-generated incident summary")
     parser.add_argument("--host", default="127.0.0.1", help="API bind address (default: localhost)")
     parser.add_argument("--port", type=int, default=8000, help="API port")
@@ -24,12 +27,23 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.monitor:
+        if args.log_dir:
+            settings.magento_log_dir = Path(args.log_dir).expanduser()
+        if not settings.magento_log_dir or not Path(settings.magento_log_dir).expanduser().is_dir():
+            print("[bold red]Set MAGENTO_LOG_DIR in .env or pass --log-dir with an existing directory.[/bold red]")
+            return 1
+        settings.monitor_enabled = True
+        args.api = True
+        print(f"[bold green]Monitoring[/bold green] {settings.magento_log_dir} — dashboard: http://{args.host}:{args.port}/dashboard")
+
     if args.api:
         try:
             import uvicorn
         except ImportError as error:
             raise SystemExit("Install the API dependencies with: pip install -r requirements.txt") from error
-        uvicorn.run("app.api:app", host=args.host, port=args.port, reload=False)
+        # Bounded shutdown so open live-stream connections cannot keep the monitor running.
+        uvicorn.run("app.api:app", host=args.host, port=args.port, reload=False, timeout_graceful_shutdown=3)
         return 0
 
     try:

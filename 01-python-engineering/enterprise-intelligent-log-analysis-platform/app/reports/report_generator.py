@@ -14,7 +14,8 @@ def export_report(
     """Write normalized records and, when requested, a JSON analytics summary."""
     csv_file = Path(csv_path)
     csv_file.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(csv_file, index=False)
+    # Full record text (stack traces) stays out of the flat CSV; it is available in the explorer.
+    df.drop(columns=["raw"], errors="ignore").to_csv(csv_file, index=False)
     result = {"csv": str(csv_file)}
 
     if summary is not None and json_path is not None:

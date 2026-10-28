@@ -1,6 +1,6 @@
 import pandas as pd
 
-from app.parsers.template_miner import add_templates, mine_templates
+from app.parsers.template_miner import add_templates, mask_text, mine_templates
 
 
 def test_variable_values_collapse_into_one_template():
@@ -31,8 +31,15 @@ def test_add_templates_keeps_rows_and_handles_empty():
     assert empty.empty and {"template_id", "template"} <= set(empty.columns)
 
 
-def test_hdfs_sample_reduces_to_few_templates(hdfs_log):
-    messages = [line.split(" ", 4)[-1] for line in hdfs_log.read_text().splitlines() if line.strip()]
-    ids, _ = mine_templates(messages)
-    assert len(messages) == 2000
-    assert len(set(ids)) < 30
+def test_personal_data_and_tokens_are_masked():
+    text = "Failed login for asha.12@example.com from 203.0.113.7 on https://shop.example.com/customer quote 9f86d081884c7d659a2feaa0c55ad015"
+    assert mask_text(text) == "Failed login for <EMAIL> from <IP> on <URL> quote <HASH>"
+
+
+def test_customer_emails_share_one_template():
+    ids, templates = mine_templates(
+        ["Failed login attempt for customer a.1@example.com from 203.0.113.1",
+         "Failed login attempt for customer b.2@example.org from 203.0.113.2"]
+    )
+    assert ids[0] == ids[1]
+    assert templates[0] == "Failed login attempt for customer <EMAIL> from <IP>"

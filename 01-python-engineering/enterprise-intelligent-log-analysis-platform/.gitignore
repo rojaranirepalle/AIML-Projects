@@ -8,6 +8,17 @@ venv/
 .idea/
 .DS_Store
 
+# Real log data can contain customer PII: keep it local. Only the synthetic
+# samples in data/samples/ are committed.
+data/*
+!data/samples/
+
 # Generated reports and runtime logs (regenerate with `python main.py`)
 logs/*
 !logs/.gitkeep
+
+# Local log source configured in the Settings tab
+data/source_settings.json
+
+# Private provider configuration
+data/llm_settings.json

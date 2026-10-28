@@ -5,7 +5,7 @@ import pandas as pd
 from app.models.log_model import LogEntry
 
 
-COLUMNS = ["timestamp", "level", "category", "message", "source"]
+COLUMNS = ["timestamp", "level", "category", "channel", "message", "exception", "stack_frames", "source", "raw"]
 
 
 def logs_to_dataframe(logs: List[LogEntry]) -> pd.DataFrame:
@@ -15,8 +15,12 @@ def logs_to_dataframe(logs: List[LogEntry]) -> pd.DataFrame:
             "timestamp": log.timestamp,
             "level": log.level,
             "category": log.category,
+            "channel": log.channel,
             "message": log.message,
+            "exception": log.exception,
+            "stack_frames": log.stack_frames,
             "source": log.source,
+            "raw": log.raw,
         }
         for log in logs
     ]

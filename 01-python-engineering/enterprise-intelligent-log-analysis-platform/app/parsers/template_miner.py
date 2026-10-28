@@ -8,6 +8,7 @@ detection operate on event *types* rather than unique strings.
 """
 
 import logging
+import re
 from typing import List, Tuple
 
 import pandas as pd
@@ -20,23 +21,42 @@ logging.getLogger("drain3").setLevel(logging.WARNING)
 
 
 # Order matters: specific identifiers are masked before generic numbers.
+# Emails, URLs and tokens also matter for privacy: Adobe Commerce logs often
+# carry customer emails, storefront URLs and quote/session hashes.
 MASKING_RULES = [
+    # Credentials passed on command lines or query strings (e.g. --db-password=...).
+    (r"(?i)[\w-]*(?:password|passwd|secret|token|api[_-]?key)=[^\s\"&]+", "SECRET"),
+    (r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", "EMAIL"),
+    (r"https?://[^\s\"'<>]+", "URL"),
     (r"blk_-?\d+(?:\s+blk_-?\d+)+", "BLK_LIST"),
     (r"blk_-?\d+", "BLK"),
+    (r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b", "UUID"),
+    # Hex tokens (quote masks, cache keys, session IDs); a letter is required so long numbers stay <NUM>.
+    (r"\b(?=[0-9a-fA-F]*[a-fA-F])[0-9a-fA-F]{16,}\b", "HASH"),
     (r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?(?![\w.])", "IP"),
     (r"\b0x[0-9a-fA-F]+\b", "HEX"),
     (r"(?<![\w.-])-?\d+(?:\.\d+)?(?![\w.])", "NUM"),
 ]
 
 
-def build_miner(similarity_threshold: float = 0.4, depth: int = 4) -> TemplateMiner:
-    """Create an in-memory Drain3 miner with identifier masking."""
+_COMPILED_RULES = [(re.compile(pattern), f"<{mask}>") for pattern, mask in MASKING_RULES]
+
+
+def mask_text(text: str) -> str:
+    """Replace identifiers and personal data with placeholders such as ``<EMAIL>``."""
+    for pattern, placeholder in _COMPILED_RULES:
+        text = pattern.sub(placeholder, text)
+    return text
+
+
+def build_miner(similarity_threshold: float = 0.4, depth: int = 4, persistence_handler=None) -> TemplateMiner:
+    """Create a Drain3 miner with identifier masking (in-memory unless a persistence handler is given)."""
     config = TemplateMinerConfig()
     config.drain_sim_th = similarity_threshold
     config.drain_depth = depth
     config.profiling_enabled = False
     config.masking_instructions = [MaskingInstruction(pattern, mask) for pattern, mask in MASKING_RULES]
-    return TemplateMiner(persistence_handler=None, config=config)
+    return TemplateMiner(persistence_handler=persistence_handler, config=config)
 
 
 def mine_templates(messages: List[str]) -> Tuple[List[int], List[str]]:

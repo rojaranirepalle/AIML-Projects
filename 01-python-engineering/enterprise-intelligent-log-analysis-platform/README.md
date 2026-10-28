@@ -1,227 +1,310 @@
-# Enterprise Intelligent Log Analysis Platform — Adobe Commerce
+# Enterprise Intelligent Log Analysis Platform
 
-A local Python application for **Adobe Commerce (Magento 2) log intelligence**. It ingests `var/log` files, folds multi-line exception stack traces into single records, groups lines into event templates, flags rare or severe events with machine learning, forecasts volume, and exposes everything through a CLI, a REST API and an operations dashboard.
+A local Python application for analyzing **logs from any application, service, or infrastructure**. Configure a log directory, investigate events in the dashboard and explorer, detect unusual patterns, generate reports, and optionally request AI explanations.
 
-## Why Adobe Commerce
-
-A busy Magento store writes thousands of `system.log`, `exception.log`, `debug.log` and `cron.log` lines a day. The signal an on-call developer needs — a new exception class, a one-off disk alert, a burst of checkout deadlocks, a search-engine outage — is buried under cron chatter, cache invalidations and "Broken reference" notices. This platform turns that stream into a ranked, explainable picture.
+The platform supports generic text, ISO-timestamped, Hadoop/log4j, Magento/Monolog, and Nginx combined access logs. Unrecognized records are retained as `UNKNOWN`. Parsing and field extraction depend on the format; supporting logs from any source does not mean every format has a dedicated parser.
 
 ## Features
 
-- **Magento / Monolog parsing.** Reads the `[timestamp] channel.LEVEL: message {context} [extra]` format, all eight PSR-3 levels (including `ALERT` and `EMERGENCY`), and separates the message from its JSON context.
-- **Stack traces stay with their error.** `[previous exception]`, `[stacktrace]` and `#0 /var/www/...` lines are joined to the record that raised them; the exception class (for example `Zend_Db_Statement_Exception` or `Magento\Framework\Exception\MailException`) and the number of stack frames are extracted.
-- **Event templates** with [Drain3](https://github.com/logpai/Drain3). Emails, URLs, UUIDs, hex tokens (quote masks, cache keys), IPs and numbers are masked, so 4,900 sample records reduce to 18 event types such as `Failed login attempt for customer <EMAIL> from <IP>`.
-- **Anomaly detection.** An Isolation Forest over two interpretable features per record — template rarity (`-log` of the template's share) and severity rank — surfaces rare or severe event types. Results are listed per record and grouped per template.
-- **Operational analytics.** Volume, severity, channel and category distributions, error rate, top exception classes, top templates and rule-based severity alerts.
-- **Forecast.** Next hourly or daily log and error counts from a transparent linear trend baseline.
-- **Privacy-aware incident briefs.** Optional summaries from OpenAI, Anthropic or Gemini. Disabled by default; when enabled only aggregates, templates and *masked* messages are sent — customer emails, URLs and tokens never leave the machine.
-- **Reports, API and dashboard.** CSV records and a JSON summary; async FastAPI endpoints; a responsive pastel-themed dashboard at `/dashboard` with a **Needs attention** home (store health, open alerts, known issues & fixes, hourly errors/warnings) and an **Overview** view (KPIs, severity, traffic, forecast, top templates, exceptions, recent events).
-- Still parses `LEVEL - message`, ISO-timestamped and Hadoop log4j lines; unrecognized lines are kept as `UNKNOWN` rather than discarded.
+- **Operations dashboard:** needs-attention and overview views with severity distributions, error rates, event templates, exceptions, anomalies, forecasts, and recent events.
+- **Settings tab:** a shared dashboard design with configuration for the log files root directory, active LLM provider, models, API keys, and AI enablement.
+- **Log explorer:** search and filter by text, level, source file, exception, event template, and time range; inspect original records and stack traces.
+- **Event templates:** Drain3 groups messages that differ only in variable values. Pattern-based masking covers emails, URLs, IPs, UUIDs, numeric values, and selected tokens and credentials.
+- **Anomaly detection:** Isolation Forest ranks records using template rarity and severity, with per-record and per-template results.
+- **Forecasting:** a linear baseline predicts the next hourly or daily event and error counts when enough timestamped data is available.
+- **Live monitoring:** incremental file tailing, SQLite history, rotation and truncation handling, alert rules, and dashboard updates through Server-Sent Events.
+- **Optional AI assistance:** OpenAI, Anthropic, or Google Gemini can explain events and summarize incidents. Rule-based explanations remain available without a provider.
+- **Web traffic analytics:** Nginx combined access logs provide request counts, response-code distributions, latency percentiles, and route analysis.
+- **Reports and API:** export normalized records to CSV and analytics to JSON, or use the FastAPI endpoints.
+- **Specialized knowledge base:** built-in Adobe Commerce fixes enrich matching events. General log ingestion and analysis work independently of these specialized matches.
 
 ## Quick start
 
+Run commands from this project folder. Use Python 3.11 or newer.
+
+### 1. Install dependencies
+
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-python main.py
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
-By default the app reads the `data/samples/` directory (a Magento system log and an Nginx access log) and writes `logs/log_summary.csv` and `logs/analytics_summary.json`.
+On Windows, activate the environment with `.venv\Scripts\activate`.
 
-### Sample data
+If you already use the portfolio's shared virtual environment, activate it instead of creating another one:
 
-`data/samples/adobe_commerce_system.log` and `data/samples/nginx_access.log` are **synthetic**: three days of a fictional store (`shop.example.com`, an invented `Acme` vendor) with a daily traffic rhythm, cron and queue chatter, checkout deadlocks, failed logins, mail and payment errors, a 45-minute OpenSearch outage on day 3, and a few one-off events (an `ALERT` disk warning, an undefined-array-key bug in a custom module). Regenerate it with:
+```bash
+source ../../.venv/bin/activate
+```
+
+### 2. Start the application
+
+```bash
+python main.py --api --port 8000
+```
+
+Open:
+
+- [Dashboard](http://127.0.0.1:8000/dashboard)
+- [Log explorer](http://127.0.0.1:8000/explorer)
+- [Settings](http://127.0.0.1:8000/settings)
+- [Interactive API documentation](http://127.0.0.1:8000/docs)
+
+Use another port if needed, for example `--port 8011`, and use that port in the browser URLs. Press **Ctrl+C** in Terminal to stop the application. Restart it after changing Python code; the server does not enable automatic reload.
+
+### 3. Configure your logs
+
+In **Settings → Log files**, enter the **Log files root directory path** and click **Save log directory**.
+
+- Choose an existing, readable directory on the machine running the app.
+- Absolute paths are supported. Relative paths entered in Settings resolve from the project folder; `~` expands to your home directory.
+- Directory analysis loads `*.log` files directly inside the folder. Subdirectories are not scanned recursively.
+- The source can contain logs from any application or service.
+- Refresh the dashboard or explorer after saving to analyze the new source.
+
+The initial source is `LOG_FILE_PATH`, defaulting to `data/samples`. Settings saves your selection in `data/source_settings.json`, which is git-ignored and persists across restarts.
+
+The saved directory applies to **file-mode dashboard and explorer requests** and analysis API requests that omit `input_path`. An explicit API `input_path` takes precedence and may select an individual file with any extension.
+
+**CLI batch analysis still uses `--input` or `LOG_FILE_PATH`. Live monitoring uses its startup `--log-dir` or `MAGENTO_LOG_DIR`.** Changing the directory in Settings does not switch a running monitor.
+
+### 4. Configure optional AI assistance
+
+In **Settings → LLM configuration**:
+
+1. Choose the active provider: **OpenAI**, **Anthropic**, or **Google Gemini**.
+2. Enter its API key and a model ID available to your provider account.
+3. Enable **AI assistance** when you want provider-backed analysis.
+4. Click **Save LLM configuration**.
+
+You may configure all three providers and switch between them. Changes apply immediately to AI explanations and incident summaries; no restart is needed. Saving settings itself does not contact a provider.
+
+API key fields are password inputs. The UI displays whether a key is configured and never retrieves the saved key. Leave a key field blank to retain its current value. Local overrides persist in the git-ignored `data/llm_settings.json` file with owner-only (`0600`) permissions. **This is local plaintext storage, not encrypted storage.**
+
+Saved LLM values override the corresponding environment defaults. Provider-specific keys take precedence over the optional shared `INCIDENT_SUMMARY_API_KEY`. Remove the local overrides file to return to environment-based LLM configuration.
+
+AI is disabled by default. When requested and enabled, AI analysis sends masked evidence or summaries to the selected provider. Masking is pattern-based and cannot guarantee removal of all sensitive information, especially names or identifiers inside free text.
+
+## Batch analysis and reports
+
+Run without `--api` to analyze logs once and write reports:
+
+```bash
+python main.py --input "/absolute/path/to/logs"
+```
+
+Or select a single file and report destinations:
+
+```bash
+python main.py --input "/absolute/path/to/application.log" \
+  --report output/records.csv \
+  --summary output/summary.json
+```
+
+Default output files are `logs/log_summary.csv` and `logs/analytics_summary.json`. Without `--input`, the CLI uses `LOG_FILE_PATH`, defaulting to `data/samples`.
+
+To also request an incident summary after configuring and enabling AI:
+
+```bash
+python main.py --input "/absolute/path/to/logs" --incident-summary
+```
+
+## Live monitoring
+
+Monitor a directory continuously:
+
+```bash
+python main.py --monitor --log-dir "/absolute/path/to/logs" --port 8000
+```
+
+This starts the API and live monitor together. Open the dashboard to view stored history, open alerts, and incoming updates.
+
+Alternatively, set `MAGENTO_LOG_DIR=/absolute/path/to/logs` in `.env` and run `python main.py --monitor`. The variable name is retained for compatibility; **it accepts any log directory and does not require Magento**. `--log-dir` overrides it.
+
+- Every immediate `*.log` file is tailed from its saved byte offset. New files are discovered automatically.
+- Multi-line records are held until complete or until the file has been quiet long enough.
+- Rotation and truncation are detected and the affected file is read from the beginning.
+- Existing content on first startup is imported as a baseline without raising alerts. Restarts resume from saved offsets.
+- SQLite history and Drain3 template state persist in `data/`. Only one monitor can use a database at a time.
+
+Alert rules, with a default per-key cooldown of 15 minutes:
+
+- **Critical level:** an `ALERT` or `EMERGENCY` record produces a critical alert.
+- **New exception:** a previously unseen exception class produces a high-severity alert.
+- **Error spike:** the recent error count reaches both the configured minimum and the configured multiple of its historical baseline, producing a high-severity alert.
+- **New error template:** a previously unseen error-level event type produces a medium-severity alert.
+
+Optional email alerts are configured through `.env`: set `ALERT_EMAIL_ENABLED=true`, recipients, sender, and SMTP credentials. Only alerts at or above `ALERT_EMAIL_MIN_SEVERITY` are sent. For Gmail, use an app password. Email alert text is masked before sending.
+
+## Dashboard and explorer
+
+The dashboard's **Show** chips combine Errors, Warnings, Info, and Debug filters. They recompute the log analytics for the selected levels; alerts and web traffic continue to describe the full input. The filter is stored in the URL and carried into explorer links.
+
+Examples:
+
+```text
+/dashboard?level=error,warning
+/dashboard-data?level=error,warning
+/monitor/dashboard-data?level=error
+/explorer/records?level=warning
+```
+
+Level groups and exact levels such as `CRITICAL` can be mixed. The Known issues & fixes card also offers its own issue-severity filters.
+
+The explorer uses the monitoring store when a monitor exists; otherwise it uses the saved log source. Search records, select a file or exception, filter by event type or time range, and open a record for its raw text, stack trace, related occurrences, matching fixes, and AI explanation.
+
+## AI assistant and specialized fixes
+
+Use **Explain** on an alert, **Explain with AI** on a record, or **Ask the assistant** on the dashboard. The assistant gathers related evidence and returns a structured explanation covering the summary, likely cause, evidence, next checks, and possible fixes.
+
+If AI is disabled, credentials are missing, or a provider request fails, the assistant returns a rule-based explanation. AI summaries are hypotheses to investigate, not confirmed root causes.
+
+The current knowledge base in `app/knowledge/magento.py` contains Adobe Commerce-specific patterns, causes, and suggested commands. Matching fixes and suspect-frame selection include Magento conventions. These are specialized enrichments; generic logs still support parsing, search, templates, analytics, and AI explanations, but may have no built-in fix match. Review suggested commands for your environment before using them.
+
+## Web traffic analytics
+
+Nginx combined-format access logs, optionally followed by request time, are recognized automatically. A 5xx response becomes an error event in the shared pipeline. Traffic analytics include request volume, 4xx/5xx rates, latency percentiles where timing exists, bot share, grouped routes, and slow or failing routes. Route-area labels include commerce-oriented categories from the sample use case.
+
+For container logs, write the relevant access-log lines to a `*.log` file inside the selected directory if you want file-based monitoring to ingest them.
+
+## REST API
+
+Start with `python main.py --api`. The API binds to `127.0.0.1:8000` by default. Interactive schemas are available at `/docs`.
+
+Pages:
+
+- `GET /dashboard` — operations dashboard.
+- `GET /explorer` — log explorer.
+- `GET /settings` — log source and LLM configuration.
+
+Analysis:
+
+- `GET /health` — service health.
+- `GET /dashboard-data?input_path=...&level=...` — analyzed snapshot.
+- `GET /summary?input_path=...` — analytics without report export.
+- `POST /analyze` — analyze and export; optional body fields: `input_path`, `report_path`, `summary_path`.
+- `POST /logs` — normalized records; body fields: `input_path`, `offset`, `limit` (maximum 1,000).
+- `POST /incident-summary` — provider-generated summary; optional `input_path`, with AI enabled and configured.
+
+Settings:
+
+- `GET /settings/log-source` — current default log source.
+- `PUT /settings/log-source` — save `{"log_file_path":"/absolute/path/to/logs","directory_only":true}`. The Settings form requires a directory; API clients may omit `directory_only` to save a single file instead.
+- `GET /settings/llm` — AI enablement, provider, model names, and key-configured flags; never returns API keys.
+- `PUT /settings/llm` — save `enabled`, `provider`, `openai_model`, `anthropic_model`, and `gemini_model`; optionally include provider API keys. Omitted or blank keys retain existing values.
+
+Investigation:
+
+- `GET /explorer/records` — filters: `input_path`, `q`, `level`, `source`, `exception`, `template_id`, `since`, `until`, `offset`, `limit`, `order`.
+- `GET /explorer/records/{id}` — record details.
+- `POST /assistant/explain` — explain an `alert_id`, `record_id`, `template_id`, or `question`.
+- `GET /assistant/status` — provider availability.
+- `GET /knowledge` and `GET /knowledge/match?text=...` — specialized knowledge entries and matches.
+
+Monitoring:
+
+- `GET /monitor/status`
+- `GET /monitor/dashboard-data`
+- `GET /monitor/alerts`
+- `POST /monitor/alerts/{id}/ack`
+- `GET /monitor/records?level=CRITICAL`
+- `GET /monitor/stream` — Server-Sent Events (`records` and `alert`).
+
+The application is intended for local use. Exposing it with `--host 0.0.0.0` requires appropriate access controls, including protection for settings endpoints and filesystem access.
+
+## Environment configuration
+
+The Settings tab handles the log analysis source and common LLM options. Additional settings can be supplied as environment variables or through a project-root `.env` file. Copy `.env.example` to `.env` if you do not already have one; do not overwrite existing credentials.
+
+Common variables:
+
+- `LOG_FILE_PATH`: default file or directory, initially `data/samples`; also used by CLI batch analysis.
+- `REPORT_FILE_PATH` / `SUMMARY_FILE_PATH`: report destinations.
+- `LOG_LEVEL`: application logging level, default `INFO`.
+- `ANOMALY_CONTAMINATION`: expected anomalous share, default `0.02` (greater than zero and at most `0.5`).
+- `MAGENTO_LOG_DIR`: any directory for live monitoring; overridden by `--log-dir`.
+- `MONITOR_DB_PATH`: monitoring database, default `data/monitor.db`.
+- `MONITOR_POLL_SECONDS`: polling interval, default `2`.
+- `ALERT_COOLDOWN_MINUTES`, `ALERT_SPIKE_WINDOW_MINUTES`, `ALERT_SPIKE_MIN_ERRORS`, `ALERT_SPIKE_FACTOR`: alert controls.
+- `ALERT_EMAIL_*` and `SMTP_*`: optional email delivery; see `.env.example`.
+
+LLM environment defaults:
+
+```dotenv
+INCIDENT_SUMMARY_ENABLED=false
+INCIDENT_SUMMARY_PROVIDER=openai
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
+INCIDENT_SUMMARY_MODEL=gpt-4o-mini
+ANTHROPIC_MODEL=claude-haiku-4-5-20251001
+GEMINI_MODEL=gemini-3.5-flash-lite
+INCIDENT_SUMMARY_TIMEOUT_SECONDS=30
+```
+
+These model names are the application's configured defaults; choose a model supported by your provider account. `INCIDENT_SUMMARY_API_BASE` optionally supplies a custom endpoint base. `INCIDENT_SUMMARY_API_KEY` supplies a shared fallback key when a provider-specific key is absent. These advanced options remain environment-based.
+
+Keep `.env`, local settings files, and real logs out of version control. Removing `data/source_settings.json` restores the `LOG_FILE_PATH` default for file-mode requests; removing `data/llm_settings.json` restores LLM environment defaults. Stop live monitoring before manually modifying or removing its database or template state.
+
+## Sample data
+
+The committed sample files are synthetic Adobe Commerce and Nginx logs. They demonstrate multi-line exceptions, cron and queue activity, failed logins, checkout errors, and a search outage; they do not limit the platform to that source.
+
+Regenerate them with:
 
 ```bash
 python scripts/generate_magento_sample.py --seed 7
 ```
 
-### Your own store logs
-
-Point `--input` at a single file or a whole log directory, e.g. `python main.py --input ~/magento/src/var/log`, or copy logs into `data/`. For continuous monitoring see [Live monitoring](#live-monitoring). Everything in `data/` except `data/samples/` is git-ignored, because real Magento logs contain customer emails, IP addresses and order details.
-
-Choose paths explicitly:
-
-```bash
-python main.py --input /path/to/application.log \
-  --report output/records.csv --summary output/summary.json
-```
-
-## Filtering by level
-
-The **Show** chips under the dashboard header (Errors · Warnings · Info · Debug, combinable) recompute every log section — KPIs, severity, templates, exceptions, rare event types, known issues and recent events — for the selected levels. Alerts and web traffic always show everything. The choice is kept in the URL (`/dashboard?level=error,warning`) and carried into the explorer when you click through. The **Known issues & fixes** card has its own severity chips (High · Medium · Low · Info).
-
-The same filter works in the API: `GET /dashboard-data?level=error,warning`, `GET /monitor/dashboard-data?level=error` and `GET /explorer/records?level=warning`; groups (`error`, `warning`, `info`, `debug`) and exact levels (`CRITICAL`) can be mixed.
-
-## Known issues & fixes
-
-`app/knowledge/magento.py` is a curated knowledge base of 20 common Adobe Commerce log events — search engine down, deadlocks and lock waits, "Area code is not set", missing media assets, InnoDB buffer pool, Braintree without credentials, cron not installed, maintenance mode, mail failures, session size, duplicate collection IDs, generated-class errors, PHP warnings in custom code, disk space, nginx 5xx and more. Each entry has the usual cause, fix steps and the `bin/magento` (or docker) commands to run.
-
-Every event type in the analyzed logs is matched against it; the dashboard's **Known issues & fixes** card lists matches by severity with copyable commands. `GET /knowledge` lists all entries; `GET /knowledge/match?text=...` matches any text.
-
-## Log explorer
-
-`/explorer` searches every record — in live mode the monitoring store, otherwise the configured file or directory. Filter by text, level, file, exception class, event type and time range; open a record to see its full stack trace, how often its event type occurs, the matching fix, and an **Explain with AI** button. Dashboard template, exception and issue rows link straight into the explorer.
-
-API: `GET /explorer/records?q=&level=ERROR,CRITICAL&source=&exception=&template_id=&since=&until=&offset=&limit=` and `GET /explorer/records/{id}`.
-
-## Web traffic (Nginx access logs)
-
-Access logs in the combined format (with an optional trailing request time) are recognized automatically in any analyzed file or monitored directory. They feed the shared pipeline (5xx responses become error events, so they raise alerts and match the "server errors" fix) and a **Web traffic** card: request volume, 5xx/4xx rates, p50/p95/p99 response time, bot share, requests and 5xx per Magento area (checkout, cart, REST, GraphQL, search, admin, static…), routes with 5xx errors and the slowest routes. URLs are grouped into routes (`/rest/default/V1/guest-carts/<ID>/items`), and client IPs are only reported as masked prefixes.
-
-docker-magento's nginx logs to the container output rather than a file. To include it while monitoring, stream it into the watched folder from the Magento project directory:
-
-```bash
-docker compose logs -f --no-log-prefix --since 0s app \
-  | grep --line-buffered -E '^[0-9a-fA-F.:]+ - ' >> src/var/log/nginx_access.log
-```
-
-## AI root-cause assistant
-
-**Explain** on an alert, **Explain with AI** on a record, or the **Ask the assistant** box on the dashboard (`POST /assistant/explain` with `alert_id`, `record_id`, `template_id` or `question`). The assistant:
-
-1. gathers evidence — the event and how often it occurs, a masked stack-trace excerpt, the *suspect frame* (first frame in `app/code`, then third-party modules, then Magento modules; framework libraries are skipped), other problems and web 5xx responses within ±10 minutes, recent alerts;
-2. matches the evidence against the knowledge base, keeping issues that match the event itself separate from issues that only match nearby events; and
-3. sends the masked evidence to the configured provider (OpenAI, Anthropic or Gemini, the same settings as incident briefs) for a structured answer — *Summary, Likely cause, Evidence, Check next, Fix*.
-
-When no provider is enabled, or a request fails, it returns a rule-based explanation built from the same evidence, so the feature works offline. Emails, URLs, IPs, tokens and credentials are masked before anything leaves the machine. `GET /assistant/status` reports whether a provider is available.
-
-## Live monitoring
-
-Watch a Magento `var/log` directory continuously: new lines are parsed as they are written, stored in SQLite, checked against alert rules, and pushed to the dashboard.
-
-```bash
-# docker-magento (markshust) bind-mounts the container's var/ to src/var on the host
-python main.py --monitor --log-dir ~/path/to/magento/src/var/log
-# or set MAGENTO_LOG_DIR in .env and run
-python main.py --monitor
-```
-
-Open `http://127.0.0.1:8000/dashboard`. In live mode it shows an **Alerts** panel, updates itself over Server-Sent Events when new records arrive, and runs analytics over the stored history instead of a single file.
-
-How it works:
-
-- **Tailing.** Every `*.log` file in the directory is read incrementally from a saved byte offset. Multi-line exception records are held until they are complete. Truncated or rotated files (for example after clearing `var/log`) are detected and re-read from the start, and new files are picked up automatically.
-- **History without noise.** On first start, existing log content is imported as *baseline*: it builds the history and the known exceptions and event types, but raises no alerts. Restarts resume from the saved offsets, so lines written while the monitor was stopped are still checked, and no line is stored twice. Only one monitor can use a database at a time.
-- **Stable templates.** Drain3 state is persisted next to the database, so template IDs survive restarts.
-- **Alert rules** (each with a per-key cooldown, default 15 minutes):
-
-  | Rule | Fires when | Severity |
-  | --- | --- | --- |
-  | `critical_level` | an `ALERT` or `EMERGENCY` record is logged | critical |
-  | `new_exception` | an exception class appears that has never been seen before | high |
-  | `error_spike` | errors in the last 5 minutes reach both `ALERT_SPIKE_MIN_ERRORS` and `ALERT_SPIKE_FACTOR` × the average 5-minute count over the previous 24 hours | high |
-  | `new_error_template` | an error-level event type appears for the first time | medium |
-
-- **E-mail alerts (optional).** Set `ALERT_EMAIL_ENABLED=true`, `ALERT_EMAIL_TO` and the SMTP settings; for Gmail use an app password. Only alerts at or above `ALERT_EMAIL_MIN_SEVERITY` are sent, and their text is masked (emails, URLs, IPs, tokens) before it leaves the machine.
-
-Monitoring endpoints: `GET /monitor/status`, `GET /monitor/dashboard-data`, `GET /monitor/alerts`, `POST /monitor/alerts/{id}/ack`, `GET /monitor/records?level=CRITICAL`, and `GET /monitor/stream` (Server-Sent Events: `records` and `alert`). The database (`data/monitor.db`) and template state live in the git-ignored `data/` folder; delete both to start over.
-
-## REST API
-
-Start the API bound to localhost:
-
-```bash
-python main.py --api
-```
-
-Open `http://127.0.0.1:8000/docs` for interactive API documentation. Endpoints:
-
-- `GET /dashboard` — visual operations dashboard.
-- `GET /dashboard-data` — one analyzed snapshot for the dashboard.
-
-- `GET /health` — process health check.
-- `POST /analyze` — analyze a file (or a directory of `*.log` files, such as Magento `var/log`) and write the configured CSV/JSON reports. Body fields: `input_path`, `report_path`, and `summary_path`.
-- `GET /summary?input_path=...` — return analytics without writing reports.
-- `POST /logs` — retrieve normalized records with `input_path`, `offset`, and `limit` (maximum 1,000 records per page).
-- `POST /incident-summary` — request a provider-generated incident summary for `input_path`; requires the explicit provider configuration below.
-
-The API is intended for local use and binds to `127.0.0.1` by default. Set `--host 0.0.0.0` only when you intend to expose it to a network and have added appropriate access controls.
-
-## Configuration
-
-Settings can be provided as environment variables or in a local `.env` file:
-
-Copy `.env.example` to `.env` to start from the defaults. Keep `.env` and any real API key out of version control.
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `APP_NAME` | `Enterprise Intelligent Log Analysis Platform` | API service name |
-| `LOG_FILE_PATH` | `data/samples` | Default input file or directory |
-| `REPORT_FILE_PATH` | `logs/log_summary.csv` | Default detailed CSV report |
-| `SUMMARY_FILE_PATH` | `logs/analytics_summary.json` | Default analytics report |
-| `LOG_LEVEL` | `INFO` | Application logging level |
-| `MAGENTO_LOG_DIR` | unset | Directory watched by `--monitor` (e.g. `<magento>/src/var/log`) |
-| `MONITOR_DB_PATH` | `data/monitor.db` | SQLite database for monitored records and alerts |
-| `ALERT_EMAIL_ENABLED` | `false` | Send alerts by e-mail (see `.env.example` for SMTP settings) |
-| `ANOMALY_CONTAMINATION` | `0.02` | Expected share of records the Isolation Forest flags (0 < value ≤ 0.5) |
-| `INCIDENT_SUMMARY_ENABLED` | `false` | Explicitly enable outbound incident summary requests |
-| `INCIDENT_SUMMARY_PROVIDER` | `openai` | `openai`, `anthropic`, or `gemini` |
-| `INCIDENT_SUMMARY_API_BASE` | provider default | Optional custom API base URL |
-| `OPENAI_API_KEY` | unset | OpenAI API key when using OpenAI |
-| `ANTHROPIC_API_KEY` | unset | Anthropic API key when using Claude |
-| `GEMINI_API_KEY` | unset | Google Gemini API key |
-| `INCIDENT_SUMMARY_API_KEY` | unset | Optional generic key override |
-| `INCIDENT_SUMMARY_MODEL` | `gpt-4o-mini` | OpenAI model name |
-| `ANTHROPIC_MODEL` | `claude-haiku-4-5-20251001` | Claude model name |
-| `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Gemini model name |
-| `INCIDENT_SUMMARY_TIMEOUT_SECONDS` | `30` | Provider request timeout |
-
-Set `INCIDENT_SUMMARY_ENABLED=true` and choose `INCIDENT_SUMMARY_PROVIDER=openai`, `anthropic`, or `gemini`. The integration uses each provider's native request format. It sends a compact analytics summary, event templates, exception class names and selected anomaly messages with emails, URLs, IPs, UUIDs and hex tokens masked. Masking is pattern-based and cannot catch every kind of personal data (for example names inside free text), so check your store's data policy before enabling it for production logs.
-
-Example Claude configuration in `.env`:
-
-```dotenv
-INCIDENT_SUMMARY_ENABLED=true
-INCIDENT_SUMMARY_PROVIDER=anthropic
-ANTHROPIC_API_KEY=your-key-here
-ANTHROPIC_MODEL=claude-haiku-4-5-20251001
-```
-
-For OpenAI, set `INCIDENT_SUMMARY_PROVIDER=openai`, `OPENAI_API_KEY`, and optionally `INCIDENT_SUMMARY_MODEL`. You can request the summary with `python main.py --incident-summary` or `POST /incident-summary`.
-
-For Gemini, set `INCIDENT_SUMMARY_PROVIDER=gemini`, `GEMINI_API_KEY`, and optionally `GEMINI_MODEL`. Google’s Gemini API uses the `generateContent` endpoint; the default model is `gemini-3.5-flash-lite`. See [Google's model list](https://ai.google.dev/gemini-api/docs/models) for current available model IDs.
+Real logs placed in `data/` outside the committed sample directory are git-ignored.
 
 ## Testing
 
 ```bash
-pytest
+python -m pytest -q
 ```
 
-The suite (93 tests) covers the knowledge base, access-log parsing and traffic analytics, explorer filters, the assistant (rule-based and mocked AI modes, masking, alert targets), every parser format including Magento stack traces, Drain3 template, PII and credential masking, incremental tailing (partial lines, rotation, truncation, restarts), alert rules and cooldowns, the monitoring endpoints, summary metrics, the anomaly model, the forecast, report export, and each API endpoint via FastAPI's `TestClient`. No network access or API keys are needed.
+Tests cover supported parser formats, stack traces, masking, templates, analytics, forecasting, reports, explorer filters, assistant fallback and mocked provider calls, tailing and rotation, monitoring alerts, API routes, and Settings persistence and validation. LLM settings tests verify key retention, owner-only file permissions, secret-free responses, and provider/model selection. No real API keys or external LLM calls are needed.
 
 ## Architecture
 
-```
-raw log file
-  → app/parsers/log_parser.py       group multi-line records, parse each into a LogEntry (app/models)
-  → app/data_processing/            build a stable-schema DataFrame
-  → app/parsers/template_miner.py   add template_id / template (Drain3)
-  → app/analytics/                  summary metrics, Isolation Forest, forecast
-  → app/reports/                    CSV records + JSON summary
+```text
+log files
+  → app/parsers/                   normalized records and multi-line grouping
+  → app/data_processing/           stable-schema DataFrame
+  → app/parsers/template_miner.py  Drain3 templates and masking
+  → app/analytics/                 metrics, anomalies, forecasts, traffic analysis
+  → app/reports/                   CSV records and JSON summaries
 ```
 
-`main.py` is the CLI. `app/api.py` exposes HTTP routes. Both call `app/services/log_service.py`, which coordinates the pipeline above. `app/services/incident_summarizer.py` optionally sends the aggregate summary (including top and rare templates) to an LLM provider.
-
-```
+```text
 ├── app/
-│   ├── analytics/        forecasting, ml_anomaly, pandas_analytics
-│   ├── config/           pydantic-settings configuration
-│   ├── knowledge/        Adobe Commerce known issues and fixes
-│   ├── monitoring/       tailer, SQLite store, alert rules, notifier, live API routes
-│   ├── parsers/          log_parser (Monolog, Hadoop, generic), access_log (Nginx), template_miner
-│   ├── services/         log_service, llm_client, incident_summarizer
-│   ├── assistant.py      AI root-cause assistant
-│   ├── explorer.py       log search API
-│   └── static/           dashboard.html, explorer.html, theme.css (shared pastel theme, served under /static)
-├── data/                 local store logs (git-ignored); data/samples/ is committed
-├── logs/                 generated reports (git-ignored)
-├── scripts/              synthetic Adobe Commerce sample generator
-├── tests/                pytest suite
-└── main.py               CLI entry point
+│   ├── analytics/         metrics, traffic, anomaly detection, forecasting
+│   ├── config/            environment settings, saved log source, private LLM settings
+│   ├── knowledge/         specialized Adobe Commerce fixes
+│   ├── monitoring/        tailer, SQLite store, alerts, notifier, live routes
+│   ├── parsers/           generic, ISO, Hadoop, Monolog, Nginx, Drain3
+│   ├── services/          ingestion orchestration and provider integrations
+│   ├── api.py             FastAPI application and analysis/settings routes
+│   ├── assistant.py       evidence gathering and AI/rule-based explanations
+│   ├── explorer.py        search and record-detail API
+│   └── static/            dashboard.html, explorer.html, settings.html, theme.css
+├── data/                  local logs, saved settings, monitor state, synthetic samples
+├── logs/                  generated reports
+├── scripts/               synthetic sample generator
+├── tests/                 pytest suite
+├── .env.example           configuration reference
+├── requirements.txt       dependencies
+└── main.py                CLI and server entry point
 ```
 
-## Scope and next steps
+`main.py` and the API use `app/services/log_service.py` for batch analysis. The monitor incrementally parses and stores records in SQLite. LLM calls read the saved provider overrides at request time.
 
-ML anomaly scores and forecasts are exploratory batch-level signals, not calibrated operational alerts. Isolation Forest is refit on each uploaded batch and its scores only rank records within that batch, and the forecast is a linear baseline that needs sufficient timestamp coverage. Validate both against historical incidents before using them for paging decisions. Provider-generated summaries require credentials for a compatible service and are never fabricated when unavailable. Treat log content as sensitive when choosing a provider.
+## Current limitations
+
+- Folder ingestion and live monitoring currently select immediate `*.log` files, without recursive discovery or UI-configurable file patterns.
+- The Settings log directory controls file-mode analysis, not CLI batch defaults or a running live monitor.
+- Specialized issue matching and some dashboard labels still reflect the Adobe Commerce sample use case.
+- Isolation Forest ranks events within the analyzed batch; scores are not calibrated operational risk probabilities. Forecasts are simple trend baselines requiring timestamp coverage.
+- Masking reduces exposure but is not a guarantee of complete redaction. AI explanations require review against the actual evidence.
