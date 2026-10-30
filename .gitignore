@@ -29,3 +29,9 @@
 
 # --- macOS system files ---
 .DS_Store
+
+# --- Python environments ---
+.venv/
+__pycache__/
+*.pyc
+.env
